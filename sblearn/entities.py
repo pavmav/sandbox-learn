@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import math
 import random
-
-import pandas
+import numpy as np
 
 import action_library as actions
 import brain
@@ -89,35 +87,6 @@ class Entity(object):
 
     def dissolve(self):
         self.board.remove_object(self)
-
-    def find_nearest_coordinates_by_type(self, type_to_find):
-
-        list_found = self.board.find_all_coordinates_by_type(type_to_find)
-
-        smallest_distance = 9e10
-        closest_so_far = None
-
-        for coordinates in list_found:
-            distance = math.sqrt((self.x - coordinates[0]) ** 2 + (self.y - coordinates[1]) ** 2)
-            if distance <= smallest_distance:
-                smallest_distance = distance
-                closest_so_far = coordinates
-
-        return closest_so_far
-
-    def find_nearest_entity_by_type(self, type_to_find):
-        coordinates = self.find_nearest_coordinates_by_type(type_to_find)
-
-        if coordinates is None:
-            return None
-
-        cell = self.board.get_cell(**coordinates)
-
-        for element in cell:
-            if isinstance(element, type_to_find):
-                return element
-
-        return None
 
     def count_substance_of_type(self, type_of_substance):
         num = 0
@@ -232,57 +201,18 @@ class Creature(Entity):
 
         self.update_decision_model()
 
-    def set_sex(self, sex):
-        self.sex = sex
-        if self.sex:
-            self.color = "#550000"
-        else:
-            self.color = "#990000"
-
-    def need_to_update_plan(self):
-        return len(self.action_queue) == 0
-
-    def plan(self):
-
-        if self.plan_callable is not None:
-            self.plan_callable(self)
-            return
-
     def die(self):
         if not self.mortal:
             return
         self.alive = False
         self.time_of_death = self.z
 
-    def perform_action(self, action):
-        results = action.do_results()
-
-        if results["done"] or not action.action_possible():
-            self.action_log.append(self.action_queue.pop(0))
-
-        return results
-
-    def perform_action_save_memory(self, action):
-        self.chosen_action = action
-
-        if type(action) in self.memorize_tasks:
-            results = self.perform_action(action)
-            if results["done"]:
-                self.private_learning_memory.save_results(self.get_target(type(action)), action)
-                self.public_memory.save_results(self.get_target(type(action)), action)
+    def set_sex(self, sex):
+        self.sex = sex
+        if self.sex:
+            self.color = "#550000"
         else:
-            results = self.perform_action(action)
-
-        self.chosen_action = None
-        return results
-
-    def queue_action(self, action):
-
-        if type(action) in self.memorize_tasks:
-            self.private_learning_memory.save_state(self.get_features(type(action)), action)
-            self.public_memory.save_state(self.get_features(type(action)), action)
-
-        self.action_queue.append(action)
+            self.color = "#990000"
 
     def can_mate(self, with_who):
         if isinstance(with_who, Creature):
@@ -316,6 +246,45 @@ class Creature(Entity):
             else:
                 return random.random() < 1. * partner_has_substance / (self_has_substance*3 + partner_has_substance)
 
+    def need_to_update_plan(self):
+        return len(self.action_queue) == 0
+
+    def plan(self):
+
+        if self.plan_callable is not None:
+            self.plan_callable(self)
+            return
+
+    def queue_action(self, action):
+
+        if type(action) in self.memorize_tasks:
+            self.private_learning_memory.save_state(self.get_features(type(action)), action)
+            self.public_memory.save_state(self.get_features(type(action)), action)
+
+        self.action_queue.append(action)
+
+    def perform_action_save_memory(self, action):
+        self.chosen_action = action
+
+        if type(action) in self.memorize_tasks:
+            results = self.perform_action(action)
+            if results["done"]:
+                self.private_learning_memory.save_results(self.get_target(type(action)), action)
+                self.public_memory.save_results(self.get_target(type(action)), action)
+        else:
+            results = self.perform_action(action)
+
+        self.chosen_action = None
+        return results
+
+    def perform_action(self, action):
+        results = action.do_results()
+
+        if results["done"] or not action.action_possible():
+            self.action_log.append(self.action_queue.pop(0))
+
+        return results
+
     def update_decision_model(self):
         model_to_use = None
         memory_to_use = None
@@ -335,11 +304,12 @@ class Creature(Entity):
 
         table_list = memory_to_use.make_table(actions.GoMating)
         if len(table_list) >= self.memory_batch_size:
-            df_train = pandas.DataFrame(table_list)
-            y_train = df_train.pop(len(table_list[0])-1)
-            X_train = df_train
+            df_train = np.asarray(table_list)
+            y_train = df_train[:, [len(table_list[0])-1]].ravel()
+            X_train = np.delete(df_train, len(table_list[0])-1, 1)
             model_to_use.fit(X_train, y_train)
             memory_to_use.obliviate()
+            print "Update successful"
 
     def set_memorize_task(self, action_types, features_list, target):
         if isinstance(action_types, list):

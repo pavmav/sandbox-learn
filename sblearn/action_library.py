@@ -649,7 +649,3 @@ class GoMating(Action):
 
     def check_set_results(self):
         self.accomplished = self._done
-
-
-def divide(x, y):
-    return x / y

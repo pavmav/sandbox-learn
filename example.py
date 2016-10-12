@@ -53,9 +53,7 @@ class Priapus(field.Demiurge):  # Create deity
                     if search_results["accomplished"]:
 
                         features = creature.get_features(actions.GoMating)
-
                         features = np.asarray(features)
-
                         features = features.reshape(1, -1)
 
                         try:
