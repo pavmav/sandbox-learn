@@ -11,6 +11,7 @@ from sblearn import field
 from sblearn import states
 from sblearn import substances
 from sblearn import visualization
+from sblearn import modelling
 
 
 # Create deity
@@ -28,11 +29,6 @@ class Priapus(field.Demiurge):  # Create deity
             creation.memory_batch_size = 20
 
             if creation.sex:
-
-                def nearest_partner_has_substance(entity):
-                    return float(actions.SearchMatingPartner(entity).do_results()["partner"].count_substance_of_type(
-                        substances.Substance))
-
                 def difference_in_num_substance(entity):
                     nearest_partner = actions.SearchMatingPartner(entity).do_results()["partner"]
                     if nearest_partner is None:
@@ -52,8 +48,6 @@ class Priapus(field.Demiurge):  # Create deity
                              "kwargs": {"creation": creation}},
                             {"func": difference_in_num_substance,
                              "kwargs": {"entity": creation}},
-                            # {"func": lambda creation: float(creation.count_substance_of_type(substances.Substance)),
-                            #  "kwargs": {"creation": creation}},
                              {"func": possible_partners_exist,
                               "kwargs": {"entity": creation}}]
 
@@ -64,6 +58,7 @@ class Priapus(field.Demiurge):  # Create deity
             def plan(creature):
                 if creature.sex:
                     try:
+                        raise NotFittedError
                         current_features = creature.get_features(actions.GoMating)
                         current_features = np.asarray(current_features).reshape(1, -1)
                         if creature.public_decision_model.predict(current_features):
@@ -108,4 +103,35 @@ for y in range(10, 30):
 
 universe.populate(entities.Creature, 20)  # Populate universe with creatures
 
-visualization.visualize(universe)
+# visualization.visualize(universe)
+
+
+def check_stop_function(field):
+    return field.epoch >= 500
+
+
+def score_function(field):
+    stats = field.get_stats()
+    if "Creature" not in stats:
+        return 0
+    else:
+        return stats["Creature"]
+
+res = modelling.run_simulation(universe, check_stop_function, score_function, verbose=True, times=30)
+print res
+print np.asarray(res).mean()
+
+# random 1000 10 [193, 37, 97, 224, 349, 165, 251, 130, 184, 335]
+# SGDClassifier 1000 10 [9, 106, 127, 11, 187, 38, 193, 114, 236, 27]
+
+# random 500 20 [63, 24, 38, 14, 30, 65, 29, 60, 28, 25, 93, 44, 51, 26, 104, 56, 53, 38, 23, 42] mean 45.299999999999997
+# SGDClassifier 500 20 [116, 52, 50, 82, 109, 49, 109, 37, 25, 115, 130, 180, 52, 52, 113, 46, 34, 135, 26, 33] mean 77.25
+
+# random 500 20 [71, 24, 57, 56, 34, 14, 75, 66, 41, 56, 29, 69, 30, 72, 40, 57, 49, 24, 41, 48] mean 47.65
+# SGDClassifier 500 20 [175, 40, 117, 96, 119, 116, 58, 134, 67, 87, 73, 147, 124, 125, 82, 139, 78, 110, 74, 100] mean 103.05
+
+
+
+
+
+

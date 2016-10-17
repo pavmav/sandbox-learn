@@ -305,12 +305,18 @@ class Creature(Entity):
         table_list = memory_to_use.make_table(actions.GoMating)
         if len(table_list) >= self.memory_batch_size:
             df_train = np.asarray(table_list)
-            print df_train
-            y_train = df_train[:, [len(table_list[0])-1]].ravel()
-            X_train = np.delete(df_train, len(table_list[0])-1, 1)
-            model_to_use.fit(X_train, y_train)
-            memory_to_use.obliviate()
-            print "Update successful"
+            # print df_train
+            target_column = len(table_list[0])-1
+            unique_targets = np.unique(df_train[:, target_column])  # TODO maybe discard
+            if len(unique_targets) > 1:
+                y_train = df_train[:, [target_column]].ravel()
+                X_train = np.delete(df_train, target_column, 1)
+                model_to_use.fit(X_train, y_train)
+                memory_to_use.obliviate()
+                print "Update successful"
+            else:
+                memory_to_use.obliviate()
+                print "Memory discarded"
 
     def set_memorize_task(self, action_types, features_list, target):
         if isinstance(action_types, list):
