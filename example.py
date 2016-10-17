@@ -33,6 +33,16 @@ class Priapus(field.Demiurge):  # Create deity
                     return float(actions.SearchMatingPartner(entity).do_results()["partner"].count_substance_of_type(
                         substances.Substance))
 
+                def difference_in_num_substance(entity):
+                    nearest_partner = actions.SearchMatingPartner(entity).do_results()["partner"]
+                    if nearest_partner is None:
+                        return 9e10
+                    else:
+                        self_has_substance = entity.count_substance_of_type(substances.Substance)
+                        partner_has_substance = nearest_partner.count_substance_of_type(substances.Substance)
+                        return partner_has_substance - self_has_substance
+
+
                 def possible_partners_exist(entity):
                     find_partner = actions.SearchMatingPartner(entity)
                     search_results = find_partner.do_results()
@@ -40,10 +50,10 @@ class Priapus(field.Demiurge):  # Create deity
 
                 features = [{"func": lambda creation: float(creation.has_state(states.NotTheRightMood)),
                              "kwargs": {"creation": creation}},
-                            {"func": nearest_partner_has_substance,
+                            {"func": difference_in_num_substance,
                              "kwargs": {"entity": creation}},
-                            {"func": lambda creation: float(creation.count_substance_of_type(substances.Substance)),
-                             "kwargs": {"creation": creation}},
+                            # {"func": lambda creation: float(creation.count_substance_of_type(substances.Substance)),
+                            #  "kwargs": {"creation": creation}},
                              {"func": possible_partners_exist,
                               "kwargs": {"entity": creation}}]
 
@@ -54,9 +64,9 @@ class Priapus(field.Demiurge):  # Create deity
             def plan(creature):
                 if creature.sex:
                     try:
-                        cuttent_features = creature.get_features(actions.GoMating)
-                        cuttent_features = np.asarray(cuttent_features).reshape(1, -1)
-                        if creature.public_decision_model.predict(cuttent_features):
+                        current_features = creature.get_features(actions.GoMating)
+                        current_features = np.asarray(current_features).reshape(1, -1)
+                        if creature.public_decision_model.predict(current_features):
                             go_mating = actions.GoMating(creature)
                             creature.queue_action(go_mating)
                             return
