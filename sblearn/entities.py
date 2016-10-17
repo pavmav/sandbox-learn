@@ -305,6 +305,7 @@ class Creature(Entity):
         table_list = memory_to_use.make_table(actions.GoMating)
         if len(table_list) >= self.memory_batch_size:
             df_train = np.asarray(table_list)
+            print df_train
             y_train = df_train[:, [len(table_list[0])-1]].ravel()
             X_train = np.delete(df_train, len(table_list[0])-1, 1)
             model_to_use.fit(X_train, y_train)
