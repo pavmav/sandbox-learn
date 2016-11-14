@@ -91,7 +91,7 @@ class Field(object):
             representation.append(row_list)
         return representation
 
-    def insert_object(self, x, y, entity_object, epoch=0):
+    def insert_object(self, x, y, entity_object, epoch_shift=0):
         if self.demiurge is not None:
             refuse = False
             self.demiurge.handle_creation(entity_object, refuse)
@@ -106,7 +106,7 @@ class Field(object):
         else:
             self.__field[y][x][-1] = entity_object
 
-        entity_object.z = self.epoch + epoch
+        entity_object.z = self.epoch + epoch_shift
 
         entity_object.board = self
         entity_object.x = x
@@ -144,16 +144,16 @@ class Field(object):
             for x in range(self.length):
                 for element in self.__field[y][x]:
                     if element.z == self.epoch:
-                        theads_list.append(threading.Thread(target=element.live))
+                        threads_list.append(threading.Thread(target=element.live))
 
-        for t in theads_list:
+        for t in threads_list:
             t.start()
 
         wait = True
 
         while wait:
             wait = False
-            for t in theads_list:
+            for t in threads_list:
                 if t.isAlive():
                     wait = True
                     continue

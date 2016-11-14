@@ -27,8 +27,6 @@ class Action(object):
         self.accomplished = False
         self._done = False
         self.instant = False
-        # self.time_start = subject.board.epoch
-        # self.time_finish = None
 
     def get_objective(self):
         return {}
@@ -112,7 +110,7 @@ class MovementXY(Action):
 
         if self.subject.board.cell_passable(current_step_x, current_step_y):
             self.subject.board.remove_object(self.subject, self.subject.x, self.subject.y)
-            self.subject.board.insert_object(current_step_x, current_step_y, self.subject, epoch=1)
+            self.subject.board.insert_object(current_step_x, current_step_y, self.subject, epoch_shift=1)
 
         self.check_set_results()
 
@@ -499,7 +497,7 @@ class GiveBirth(Action):
 
         offspring = entities.Creature()
 
-        self.subject.board.insert_object(place[0], place[1], offspring, epoch=1)
+        self.subject.board.insert_object(place[0], place[1], offspring, epoch_shift=1)
 
         self.subject.remove_state(self.pregnant_state)
 

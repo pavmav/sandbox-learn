@@ -58,7 +58,7 @@ class Priapus(field.Demiurge):  # Create deity
             def plan(creature):
                 if creature.sex:
                     try:
-                        raise NotFittedError
+                        # raise NotFittedError
                         current_features = creature.get_features(actions.GoMating)
                         current_features = np.asarray(current_features).reshape(1, -1)
                         if creature.public_decision_model.predict(current_features):
@@ -87,7 +87,7 @@ class Priapus(field.Demiurge):  # Create deity
             creation.plan_callable = plan
 
 
-universe = field.Field(60, 40)  # Create sample universe (length, height
+universe = field.Field(60, 40)  # Create sample universe (length, height)
 
 universe.set_demiurge(Priapus())  # Assign deity to universe
 
@@ -103,7 +103,7 @@ for y in range(10, 30):
 
 universe.populate(entities.Creature, 20)  # Populate universe with creatures
 
-# visualization.visualize(universe)
+visualization.visualize(universe)
 
 
 def check_stop_function(field):
@@ -117,9 +117,9 @@ def score_function(field):
     else:
         return stats["Creature"]
 
-res = modelling.run_simulation(universe, check_stop_function, score_function, verbose=True, times=30)
-print res
-print np.asarray(res).mean()
+# res = modelling.run_simulation(universe, check_stop_function, score_function, verbose=True, times=30)
+# print res
+# print np.asarray(res).mean()
 
 # random 1000 10 [193, 37, 97, 224, 349, 165, 251, 130, 184, 335]
 # SGDClassifier 1000 10 [9, 106, 127, 11, 187, 38, 193, 114, 236, 27]
@@ -130,7 +130,10 @@ print np.asarray(res).mean()
 # random 500 20 [71, 24, 57, 56, 34, 14, 75, 66, 41, 56, 29, 69, 30, 72, 40, 57, 49, 24, 41, 48] mean 47.65
 # SGDClassifier 500 20 [175, 40, 117, 96, 119, 116, 58, 134, 67, 87, 73, 147, 124, 125, 82, 139, 78, 110, 74, 100] mean 103.05
 
-
+# random 500 30 [42, 32, 62, 34, 30, 44, 51, 35, 63, 59, 50, 40, 75, 59, 50, 33, 45, 95, 82, 41, 43, 89, 94, 66, 64, 46, 34, 82, 66, 76]
+# 56.0666666667
+# SGDClassifier 500 30 [62, 85, 72, 42, 17, 48, 74, 53, 42, 73, 57, 29, 82, 51, 80, 84, 86, 73, 51, 36, 85, 85, 46, 59, 68, 33, 44, 38, 62, 26]
+# 58.1
 
 
 

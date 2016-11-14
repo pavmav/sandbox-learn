@@ -8,7 +8,7 @@ import tkFileDialog
 
 # Объявляем переменные
 WIN_WIDTH = 800  # Ширина создаваемого окна
-WIN_HEIGHT = 640  # Высота
+WIN_HEIGHT = 400  # Высота
 DISPLAY = (WIN_WIDTH, WIN_HEIGHT)  # Группируем ширину и высоту в одну переменную
 BACKGROUND_COLOR = "#004400"
 PLATFORM_WIDTH = 10
@@ -61,16 +61,6 @@ def visualize(field):
                     tick -= 10
                 elif e.key == pygame.K_ESCAPE:
                     go_on = False
-                    # elif e.key == pygame.K_c:
-                    #     print c.count_substance_of_type(substances.Substance)
-                    # elif e.key == pygame.K_m:
-                    #     l = c.learning_memory.make_table(actions.GoMating)
-                    #     print "/n"
-                    #     for line in l:
-                    #         print line
-                    # elif e.key == pygame.K_g:
-                    #     table_list_of_dicts = f.public_memory.make_table(actions.GoMating)
-                    #     print table_list_of_dicts
 
         screen.blit(bg, (0, 0))  # Каждую итерацию необходимо всё перерисовывать
 

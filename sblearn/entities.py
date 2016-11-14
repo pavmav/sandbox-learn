@@ -136,19 +136,14 @@ class Block(Entity):
         return "Block"
 
 
-class Creature(Entity):
+class Agent(Entity):
     def __init__(self):
-        super(Creature, self).__init__()
+        super(Agent, self).__init__()
         self.passable = False
         self.scenery = False
-        self.alive = True
         self.name = ''
         self.sex = random.choice([True, False])
-        if self.sex:
-            self.color = "#550000"
-        else:
-            self.color = "#990000"
-        self.mortal = True
+
         self.private_learning_memory = brain.LearningMemory(self)
         self.public_memory = None
 
@@ -165,24 +160,17 @@ class Creature(Entity):
         self.memorize_tasks = {}
         self.chosen_action = None
 
-    def __str__(self):
-        return '@'
-
     @classmethod
     def class_name(cls):
-        return "Creature"
+        return "Agent"
+
+    def pre_actions(self, refuse):
+        return True
 
     def live(self):
-        super(Creature, self).live()
-        if (self.time_of_death is not None) and self.z - self.time_of_death > 10:
-            self.dissolve()
-            return
+        super(Agent, self).live()
 
-        if not self.alive:
-            return
-
-        if random.random() <= 0.001 and self.age > 10:
-            self.die()
+        if not self.pre_actions():
             return
 
         if self.need_to_update_plan():
@@ -200,51 +188,6 @@ class Creature(Entity):
                 self.perform_action_save_memory(current_action)
 
         self.update_decision_model()
-
-    def die(self):
-        if not self.mortal:
-            return
-        self.alive = False
-        self.time_of_death = self.z
-
-    def set_sex(self, sex):
-        self.sex = sex
-        if self.sex:
-            self.color = "#550000"
-        else:
-            self.color = "#990000"
-
-    def can_mate(self, with_who):
-        if isinstance(with_who, Creature):
-            if with_who.sex != self.sex:
-
-                if not self.alive or not with_who.alive:
-                    return False
-
-                if self.sex:
-                    return not with_who.has_state(states.Pregnant)
-                else:
-                    return not self.has_state(states.Pregnant)
-
-        return False
-
-    def will_mate(self, with_who):
-        if not self.can_mate(with_who):
-            return False
-
-        if self.sex:
-            if self.has_state(states.NotTheRightMood):
-                return False
-            return True
-        else:
-            self_has_substance = self.count_substance_of_type(substances.Substance)
-            partner_has_substance = with_who.count_substance_of_type(substances.Substance)
-            if self_has_substance + partner_has_substance == 0:
-                return False
-            if self_has_substance <= partner_has_substance:
-                return True
-            else:
-                return random.random() < 1. * partner_has_substance / (self_has_substance*3 + partner_has_substance)
 
     def need_to_update_plan(self):
         return len(self.action_queue) == 0
@@ -362,6 +305,102 @@ class Creature(Entity):
                 return target_raw["func"]()
         else:
             return target_raw
+
+
+class Creature(Agent):
+    def __init__(self):
+        super(Creature, self).__init__()
+        self.passable = False
+        self.scenery = False
+        self.alive = True
+        self.name = ''
+        self.sex = random.choice([True, False])
+        if self.sex:
+            self.color = "#550000"
+        else:
+            self.color = "#990000"
+        self.mortal = True
+        self.private_learning_memory = brain.LearningMemory(self)
+        self.public_memory = None
+
+        self.private_decision_model = None
+        self.public_decision_model = None
+
+        self.plan_callable = None
+
+        self.memory_type = ""
+        self.model_type = ""
+
+        self.memory_batch_size = 1
+
+        self.memorize_tasks = {}
+        self.chosen_action = None
+
+    def __str__(self):
+        return '@'
+
+    @classmethod
+    def class_name(cls):
+        return "Creature"
+
+    def pre_actions(self):
+        if (self.time_of_death is not None) and self.z - self.time_of_death > 10:
+            self.dissolve()
+            return False
+
+        if not self.alive:
+            return False
+
+        if random.random() <= 0.001 and self.age > 10:
+            self.die()
+            return False
+
+        return True
+
+    def die(self):
+        if not self.mortal:
+            return
+        self.alive = False
+        self.time_of_death = self.z
+
+    def set_sex(self, sex):
+        self.sex = sex
+        if self.sex:
+            self.color = "#550000"
+        else:
+            self.color = "#990000"
+
+    def can_mate(self, with_who):
+        if isinstance(with_who, Creature):
+            if with_who.sex != self.sex:
+
+                if not self.alive or not with_who.alive:
+                    return False
+
+                if self.sex:
+                    return not with_who.has_state(states.Pregnant)
+                else:
+                    return not self.has_state(states.Pregnant)
+
+        return False
+
+    def will_mate(self, with_who):
+        if not self.can_mate(with_who):
+            return False
+
+        if self.sex:
+            if self.has_state(states.NotTheRightMood):
+                return False
+            return True
+        else:
+            self_has_substance = self.count_substance_of_type(substances.Substance)
+            partner_has_substance = with_who.count_substance_of_type(substances.Substance)
+            if self_has_substance + partner_has_substance == 0:
+                return False
+            if self_has_substance <= partner_has_substance:
+                return True
+            else:
+                return random.random() < 1. * partner_has_substance / (self_has_substance*3 + partner_has_substance)
 
 
 class BreedingGround(Entity):
